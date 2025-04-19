@@ -9,15 +9,13 @@ using WB.Seller.Companies.Domain.Entities;
 
 namespace WB.Seller.Companies.Infrastructure.Database.EfConfigurations
 {
-    internal class CompanyConfiguration : IEntityTypeConfiguration<Company>
+    internal class CompanyConfiguration : BaseConfiguration<CompanyEntity>
     {
-        public void Configure(EntityTypeBuilder<Company> builder)
+        public override void Configure(EntityTypeBuilder<CompanyEntity> builder)
         {
-            builder.ToTable("companies");
+            base.Configure(builder);
 
             builder.HasKey(e => e.Id);
-
-            builder.HasIndex(e => e.OwnerId);
 
             builder.Property(e => e.Token)
                 .HasMaxLength(2000);
@@ -25,22 +23,18 @@ namespace WB.Seller.Companies.Infrastructure.Database.EfConfigurations
             builder.Property(e => e.Name)
                 .HasMaxLength(100);
 
-            builder.HasOne(e => e.Owner)
-                .WithMany(e => e.Companies)
-                .HasForeignKey(e => e.OwnerId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder.HasMany(c => c.Subscribers)
+            builder.HasMany(c => c.Users)
                 .WithMany(s => s.Companies)
-                .UsingEntity<Subscription>(
+                .UsingEntity<SubscriptionEntity>(
                     j => j
-                        .HasOne(s => s.Subscriber)
+                        .HasOne(s => s.User)
                         .WithMany(s => s.Subscriptions)
-                        .HasForeignKey(s => s.SubscriberId),
+                        .HasForeignKey(s => s.UserId),
                     j => j
                         .HasOne(x => x.Company)
                         .WithMany(x => x.Subscriptions)
                         .HasForeignKey(x => x.CompanyId));
+
         }
     }
 }

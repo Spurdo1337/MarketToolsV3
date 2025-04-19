@@ -2,10 +2,10 @@
 using MarketToolsV3.ApiGateway.Models;
 using MarketToolsV3.ApiGateway.Services.Interfaces;
 using Microsoft.Extensions.Options;
-using static Microsoft.IO.RecyclableMemoryStreamManager;
 
 namespace MarketToolsV3.ApiGateway.Middlewares
 {
+    [Obsolete]
     public class HeadersTokensAdapterMiddleware(RequestDelegate next)
     {
         public async Task Invoke(HttpContext httpContext, 

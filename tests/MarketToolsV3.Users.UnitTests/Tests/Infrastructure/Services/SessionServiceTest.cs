@@ -1,18 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Identity.Application.Services;
+﻿using Identity.Application.Models;
+using Identity.Application.Services.Abstract;
 using Identity.Domain.Entities;
 using Identity.Domain.Events;
 using Identity.Domain.Seed;
-using Identity.Infrastructure.Database;
 using Identity.Infrastructure.Services.Implementation;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -24,6 +15,8 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
         private Mock<IOptions<ServiceConfiguration>> _serviceConfigurationMock;
         private Mock<IEventRepository> _eventRepositoryMock;
         private Mock<IUnitOfWork> _unitOfWorkMock;
+        private Mock<IAccessTokenBlacklistService> _accessTokenBlacklistService;
+        private Mock<ITokenService<JwtRefreshTokenDto>> _refreshTokenService;
 
         [SetUp]
         public void Setup()
@@ -33,6 +26,8 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
             _sessionRepositoryMock.Setup(x => x.UnitOfWork).Returns(_unitOfWorkMock.Object);
             _eventRepositoryMock = new();
             _serviceConfigurationMock = new();
+            _accessTokenBlacklistService = new Mock<IAccessTokenBlacklistService>();
+            _refreshTokenService = new Mock<ITokenService<JwtRefreshTokenDto>>();
         }
 
         [Test]
@@ -43,9 +38,11 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
             SessionService sessionService = new(
                 _sessionRepositoryMock.Object,
                 _serviceConfigurationMock.Object,
-                _eventRepositoryMock.Object);
+                _eventRepositoryMock.Object,
+                _accessTokenBlacklistService.Object,
+                _refreshTokenService.Object);
 
-            await sessionService.AddAsync(session);
+            await sessionService.AddAsync(session, CancellationToken.None);
 
             _sessionRepositoryMock.Verify(x=> 
                 x.AddAsync(It.Is<Session>(s=> s == session), 
@@ -60,9 +57,12 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
             SessionService sessionService = new(
                 _sessionRepositoryMock.Object,
                 _serviceConfigurationMock.Object,
-                _eventRepositoryMock.Object);
+                _eventRepositoryMock.Object,
+                _accessTokenBlacklistService.Object,
+                _refreshTokenService.Object);
 
-            await sessionService.AddAsync(session);
+
+            await sessionService.AddAsync(session, CancellationToken.None);
 
             _sessionRepositoryMock.Verify(x=> 
                 x.UnitOfWork.SaveEntitiesAsync(
@@ -78,9 +78,12 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
             SessionService sessionService = new(
                 _sessionRepositoryMock.Object,
                 _serviceConfigurationMock.Object,
-                _eventRepositoryMock.Object);
+                _eventRepositoryMock.Object,
+                _accessTokenBlacklistService.Object,
+                _refreshTokenService.Object);
 
-            await sessionService.AddAsync(session);
+
+            await sessionService.AddAsync(session, CancellationToken.None);
 
             _eventRepositoryMock.Verify(x=> x.AddNotification(It.IsAny<SessionCreated>()), Times.Once);
         }
@@ -95,9 +98,12 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
             SessionService sessionService = new(
                 _sessionRepositoryMock.Object,
                 _serviceConfigurationMock.Object,
-                _eventRepositoryMock.Object);
+                _eventRepositoryMock.Object,
+                _accessTokenBlacklistService.Object,
+                _refreshTokenService.Object);
 
-            await sessionService.UpdateAsync(session, token, It.IsAny<string>());
+
+            await sessionService.UpdateAsync(session, token, CancellationToken.None, It.IsAny<string>());
 
             Assert.That(token, Is.EqualTo(session.Token));
         }
@@ -112,9 +118,12 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
             SessionService sessionService = new(
                 _sessionRepositoryMock.Object,
                 _serviceConfigurationMock.Object,
-                _eventRepositoryMock.Object);
+                _eventRepositoryMock.Object,
+                _accessTokenBlacklistService.Object,
+                _refreshTokenService.Object);
 
-            await sessionService.UpdateAsync(session, It.IsAny<string>(), agent);
+
+            await sessionService.UpdateAsync(session, It.IsAny<string>(), CancellationToken.None, agent);
 
             Assert.That(agent, Is.EqualTo(session.UserAgent));
         }
@@ -131,9 +140,12 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
             SessionService sessionService = new(
                 _sessionRepositoryMock.Object,
                 _serviceConfigurationMock.Object,
-                _eventRepositoryMock.Object);
+                _eventRepositoryMock.Object,
+                _accessTokenBlacklistService.Object,
+                _refreshTokenService.Object);
 
-            await sessionService.UpdateAsync(session, It.IsAny<string>(), It.IsAny<string>());
+
+            await sessionService.UpdateAsync(session, It.IsAny<string>(), CancellationToken.None,It.IsAny<string>());
 
             Assert.That(session.Updated, Is.GreaterThan(firstUpdated));
         }
@@ -146,9 +158,12 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
             SessionService sessionService = new(
                 _sessionRepositoryMock.Object,
                 _serviceConfigurationMock.Object,
-                _eventRepositoryMock.Object);
+                _eventRepositoryMock.Object,
+                _accessTokenBlacklistService.Object,
+                _refreshTokenService.Object);
 
-            await sessionService.UpdateAsync(session, It.IsAny<string>(), It.IsAny<string>());
+
+            await sessionService.UpdateAsync(session, It.IsAny<string>(), CancellationToken.None, It.IsAny<string>());
 
             _sessionRepositoryMock.Verify(x =>
                     x.UnitOfWork.SaveChangesAsync(
@@ -162,9 +177,12 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
             SessionService sessionService = new(
                 _sessionRepositoryMock.Object,
                 _serviceConfigurationMock.Object,
-                _eventRepositoryMock.Object);
+                _eventRepositoryMock.Object,
+                _accessTokenBlacklistService.Object,
+                _refreshTokenService.Object);
 
-            await sessionService.DeleteAsync(It.IsAny<string>());
+
+            await sessionService.DeleteAsync(It.IsAny<string>(), CancellationToken.None);
 
             _sessionRepositoryMock.Verify(x =>
                     x.UnitOfWork.SaveChangesAsync(
@@ -178,9 +196,12 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
             SessionService sessionService = new(
                 _sessionRepositoryMock.Object,
                 _serviceConfigurationMock.Object,
-                _eventRepositoryMock.Object);
+                _eventRepositoryMock.Object,
+                _accessTokenBlacklistService.Object,
+                _refreshTokenService.Object);
 
-            await sessionService.DeleteAsync(It.IsAny<string>());
+
+            await sessionService.DeleteAsync(It.IsAny<string>(), CancellationToken.None);
 
             _sessionRepositoryMock.Verify(x =>
                     x.DeleteAsync(It.IsAny<Session>(),
@@ -194,13 +215,27 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
             SessionService sessionService = new(
                 _sessionRepositoryMock.Object,
                 _serviceConfigurationMock.Object,
-                _eventRepositoryMock.Object);
+                _eventRepositoryMock.Object,
+                _accessTokenBlacklistService.Object,
+                _refreshTokenService.Object);
+
 
             _sessionRepositoryMock
                 .Setup(x => x.FindByIdRequiredAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Session("", ""));
+                .ReturnsAsync(new Session("", "")
+                {
+                    Token = string.Empty
+                });
 
-            await sessionService.DeactivateAsync(It.IsAny<string>());
+            _refreshTokenService
+                .Setup(x => x.Read(It.IsAny<string>()))
+                .Returns(new JwtRefreshTokenDto
+                {
+                    AccessTokenId = string.Empty,
+                    Id = string.Empty
+                });
+
+            await sessionService.DeactivateAsync(It.IsAny<string>(), CancellationToken.None);
 
             _sessionRepositoryMock.Verify(x =>
                     x.UnitOfWork.SaveChangesAsync(
@@ -213,18 +248,30 @@ namespace MarketToolsV3.Users.UnitTests.Tests.Infrastructure.Services
             SessionService sessionService = new(
                 _sessionRepositoryMock.Object,
                 _serviceConfigurationMock.Object,
-                _eventRepositoryMock.Object);
+                _eventRepositoryMock.Object,
+                _accessTokenBlacklistService.Object,
+                _refreshTokenService.Object);
+
 
             Session session = new("", "")
             {
-                IsActive = true
+                IsActive = true,
+                Token = string.Empty
             };
+
+            _refreshTokenService
+                .Setup(x => x.Read(It.IsAny<string>()))
+                .Returns(new JwtRefreshTokenDto
+                {
+                    AccessTokenId = string.Empty,
+                    Id = string.Empty
+                });
 
             _sessionRepositoryMock
                 .Setup(x => x.FindByIdRequiredAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(session);
 
-            await sessionService.DeactivateAsync(It.IsAny<string>());
+            await sessionService.DeactivateAsync(It.IsAny<string>(), CancellationToken.None);
 
             Assert.That(session.IsActive, Is.False);
         }

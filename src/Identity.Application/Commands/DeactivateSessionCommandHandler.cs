@@ -11,14 +11,15 @@ using MediatR;
 
 namespace Identity.Application.Commands
 {
-    public class DeactivateSessionCommandHandler(IStringIdQuickSearchService<SessionDto> sessionSearchService,
+    public class DeactivateSessionCommandHandler(
+        IStringIdQuickSearchService<SessionDto> sessionSearchService,
         ISessionService sessionService)
         : IRequestHandler<DeactivateSessionCommand, Unit>
     {
         public async Task<Unit> Handle(DeactivateSessionCommand request, CancellationToken cancellationToken)
         {
             await sessionService.DeactivateAsync(request.Id, cancellationToken);
-            await sessionSearchService.ClearAsync(request.Id);
+            await sessionSearchService.ClearAsync(request.Id, cancellationToken);
 
             return Unit.Value;
         }

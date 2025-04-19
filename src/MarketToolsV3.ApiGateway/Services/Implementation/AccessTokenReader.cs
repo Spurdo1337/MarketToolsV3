@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using MarketToolsV3.ApiGateway.Extensions;
 using MarketToolsV3.ApiGateway.Models.Tokens;
 using MarketToolsV3.ApiGateway.Services.Interfaces;
 
@@ -17,10 +18,30 @@ namespace MarketToolsV3.ApiGateway.Services.Implementation
 
             JwtSecurityToken tokenData = jwtSecurityTokenHandler.ReadJwtToken(token);
 
+
             return new AccessToken
             {
-                SessionId = tokenData.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid)?.Value ?? null
+                Id = tokenData.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti)?.Value ?? null,
+                SessionId = tokenData.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid)?.Value ?? null,
+                ModuleAuthInfo = CreateModuleAuth(tokenData)
             };
+        }
+
+        private ModuleAuthInfoDto? CreateModuleAuth(JwtSecurityToken jwtSecurityToken)
+        {
+            string? modulePath = jwtSecurityToken.Claims.FindByType("modulePath");
+
+            if (int.TryParse(jwtSecurityToken.Claims.FindByType("moduleId"), out var moduleId)
+                && modulePath != null)
+            {
+                return new()
+                {
+                    Id = moduleId,
+                    Path = modulePath
+                };
+            }
+
+            return null;
         }
     }
 }

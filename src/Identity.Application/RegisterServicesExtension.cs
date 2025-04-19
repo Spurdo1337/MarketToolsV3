@@ -14,6 +14,7 @@ using Identity.Application.Models;
 using Identity.Application.Services.Abstract;
 using Identity.Application.Services.Implementation;
 using FluentValidation;
+using MarketToolsV3.EventLogBus;
 
 namespace Identity.Application
 {
@@ -36,6 +37,7 @@ namespace Identity.Application
             serviceCollection.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
             serviceCollection.AddScoped<IStringIdQuickSearchService<SessionDto>, SessionQuickSearchService>();
+            serviceCollection.AddScoped<IModulePermissionsService, ModulePermissionsService>();
 
             serviceCollection
                 .AddScoped<IDeepValidator<DeactivateSessionCommand>, DeactivateSessionCommandDeepValidate>();
